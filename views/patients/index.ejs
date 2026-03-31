@@ -1,0 +1,205 @@
+<%- include('../partials/head') %>
+  <%- include('../partials/sidebar') %>
+
+    <div class="main-content">
+      <div class="page-header">
+        <div>
+          <h4 class="page-title">سجل المرضى</h4>
+          <p class="text-muted small mb-0">
+            <%= patients.length %> مريض مسجل
+          </p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPatientModal">
+          <i class="bi bi-person-plus me-1"></i>مريض جديد
+        </button>
+      </div>
+
+      <!-- Search -->
+      <form method="GET" action="/patients" class="card shadow-sm mb-3">
+        <div class="card-body py-2">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-5">
+              <input type="search" name="search" class="form-control form-control-sm"
+                placeholder="بحث بالاسم أو الهاتف أو الرقم القومي..." value="<%= search %>">
+            </div>
+            <div class="col-md-2">
+              <select name="gender" class="form-select form-select-sm">
+                <option value="">كل النوع</option>
+                <option value="ذكر" <%=gender==='ذكر' ? 'selected' : '' %>>ذكر</option>
+                <option value="أنثى" <%=gender==='أنثى' ? 'selected' : '' %>>أنثى</option>
+              </select>
+            </div>
+            <div class="col-md-2 d-flex gap-1">
+              <button type="submit" class="btn btn-sm btn-primary flex-fill">
+                <i class="bi bi-search me-1"></i>بحث
+              </button>
+              <a href="/patients" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x"></i></a>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <!-- Table -->
+      <div class="card shadow-sm">
+        <% if (patients.length===0) { %>
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-people fs-1 d-block mb-3"></i>
+            <p class="mb-2">لا يوجد مرضى مسجلون</p>
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addPatientModal">
+              إضافة أول مريض
+            </button>
+          </div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>المريض</th>
+                    <th>الهاتف</th>
+                    <th>فصيلة الدم</th>
+                    <th>الزيارات</th>
+                    <th>إجمالي المصروف</th>
+                    <th>الباقي</th>
+                    <th>آخر زيارة</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% patients.forEach(p=> {
+                    const remaining = parseFloat(p.total_spent) - parseFloat(p.total_paid);
+                    %>
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="patient-avatar <%= p.gender === 'أنثى' ? 'female' : '' %>">
+                            <%= p.full_name.charAt(0) %>
+                          </div>
+                          <div>
+                            <a href="/patients/<%= p.id %>" class="fw-500 text-decoration-none text-dark">
+                              <%= p.full_name %>
+                            </a>
+                            <div class="text-muted small">
+                              <%= p.gender %>
+                                <% if (p.age) { %>&nbsp;·&nbsp;<%= p.age %> سنة<% } %>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-muted small">
+                        <%= p.phone || '—' %>
+                      </td>
+                      <td>
+                        <% if (p.blood_type) { %>
+                          <span class="badge bg-danger-subtle text-danger">
+                            <%= p.blood_type %>
+                          </span>
+                          <% } else { %>
+                            <span class="text-muted">—</span>
+                            <% } %>
+                      </td>
+                      <td>
+                        <span class="badge bg-primary-subtle text-primary">
+                          <%= p.invoice_count %> فاتورة
+                        </span>
+                      </td>
+                      <td class="fw-600">
+                        <%= parseFloat(p.total_spent).toLocaleString('ar-EG') %> ج
+                      </td>
+                      <td class="<%= remaining > 0 ? 'text-danger fw-600' : 'text-success' %>">
+                        <%= remaining.toLocaleString('ar-EG') %> ج
+                      </td>
+                      <td class="text-muted small">
+                        <% if (p.last_visit) { %>
+                          <%= new Date(p.last_visit).toLocaleDateString('ar-EG') %>
+                            <% } else { %>—<% } %>
+                      </td>
+                      <td>
+                        <div class="d-flex gap-1">
+                          <a href="/patients/<%= p.id %>" class="btn btn-sm btn-outline-primary" title="ملف المريض">
+                            <i class="bi bi-person-lines-fill"></i>
+                          </a>
+                          <a href="/invoices/new?patient_id=<%= p.id %>" class="btn btn-sm btn-outline-success"
+                            title="فاتورة جديدة">
+                            <i class="bi bi-plus-circle"></i>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+              </table>
+            </div>
+            <% } %>
+      </div>
+    </div>
+
+    <!-- Add Patient Modal -->
+    <div class="modal fade" id="addPatientModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <form action="/patients" method="POST" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>إضافة مريض جديد</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-500">الاسم بالكامل <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="full_name" required placeholder="الاسم الرباعي">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-500">النوع</label>
+                <select class="form-select" name="gender">
+                  <option value="ذكر">ذكر</option>
+                  <option value="أنثى">أنثى</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-500">فصيلة الدم</label>
+                <select class="form-select" name="blood_type">
+                  <option value="">غير معروفة</option>
+                  <% ['A+','A-','B+','B-','AB+','AB-','O+','O-'].forEach(bt=> { %>
+                    <option value="<%= bt %>">
+                      <%= bt %>
+                    </option>
+                    <% }) %>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-500">رقم الهاتف</label>
+                <input type="tel" class="form-control" name="phone" placeholder="01xxxxxxxxx">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-500">هاتف بديل</label>
+                <input type="tel" class="form-control" name="phone2" placeholder="01xxxxxxxxx">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-500">تاريخ الميلاد</label>
+                <input type="date" class="form-control" name="birth_date">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-500">الرقم القومي</label>
+                <input type="text" class="form-control" name="national_id" placeholder="14 رقم">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-500">العنوان</label>
+                <input type="text" class="form-control" name="address" placeholder="المدينة / الحي">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-500">ملاحظات طبية</label>
+                <textarea class="form-control" name="notes" rows="2"
+                  placeholder="أمراض مزمنة، حساسية، ملاحظات..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-person-check me-1"></i>حفظ المريض
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <%- include('../partials/footer') %>

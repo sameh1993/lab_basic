@@ -1,0 +1,310 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="d-flex align-items-center gap-3">
+      <div class="patient-avatar-lg <%= patient.gender === 'أنثى' ? 'female' : '' %>">
+        <%= patient.full_name.charAt(0) %>
+      </div>
+      <div>
+        <h4 class="page-title mb-0"><%= patient.full_name %></h4>
+        <div class="text-muted small mt-1">
+          <span class="me-2"><i class="bi bi-gender-ambiguous me-1"></i><%= patient.gender %></span>
+          <% if (patient.age) { %><span class="me-2"><i class="bi bi-calendar3 me-1"></i><%= patient.age %> سنة</span><% } %>
+          <% if (patient.blood_type) { %>
+            <span class="badge bg-danger-subtle text-danger me-2"><%= patient.blood_type %></span>
+          <% } %>
+          <% if (patient.phone) { %><span><i class="bi bi-telephone me-1"></i><%= patient.phone %></span><% } %>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/patients" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-right me-1"></i>القائمة
+      </a>
+      <button class="btn btn-outline-secondary btn-sm"
+              onclick="document.getElementById('editModal').classList.add('show');document.getElementById('editModal').style.display='block'">
+        <i class="bi bi-pencil me-1"></i>تعديل
+      </button>
+      <a href="/invoices/new?patient_id=<%= patient.id %>" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i>فاتورة جديدة
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+
+    <!-- Right column: patient info + stats -->
+    <div class="col-lg-4">
+
+      <!-- Financial Summary -->
+      <div class="card shadow-sm mb-3">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-wallet2 me-2"></i>الملخص المالي</h6></div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span class="text-muted small">إجمالي الفواتير</span>
+            <span class="fw-600"><%= totalSpent.toLocaleString('ar-EG') %> ج</span>
+          </div>
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span class="text-muted small">المدفوع</span>
+            <span class="fw-600 text-success"><%= totalPaid.toLocaleString('ar-EG') %> ج</span>
+          </div>
+          <div class="d-flex justify-content-between py-2">
+            <span class="text-muted small">الباقي</span>
+            <span class="fw-700 <%= totalRemaining > 0 ? 'text-danger' : 'text-success' %>">
+              <%= totalRemaining.toLocaleString('ar-EG') %> ج
+            </span>
+          </div>
+          <% if (totalSpent > 0) { %>
+          <div class="progress mt-2" style="height:6px;border-radius:4px">
+            <div class="progress-bar bg-success"
+                 style="width:<%= Math.round((totalPaid/totalSpent)*100) %>%"></div>
+          </div>
+          <div class="text-muted small text-center mt-1">
+            <%= Math.round((totalPaid/totalSpent)*100) %>% تم تحصيله
+          </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Patient Details -->
+      <div class="card shadow-sm mb-3">
+        <div class="card-header"><h6 class="mb-0"><i class="bi bi-person-vcard me-2"></i>البيانات الشخصية</h6></div>
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0">
+            <% if (patient.phone) { %>
+            <tr><td class="text-muted small ps-3">الهاتف الأساسي</td>
+                <td class="fw-500"><%= patient.phone %></td></tr>
+            <% } %>
+            <% if (patient.phone2) { %>
+            <tr><td class="text-muted small ps-3">هاتف بديل</td>
+                <td class="fw-500"><%= patient.phone2 %></td></tr>
+            <% } %>
+            <% if (patient.national_id) { %>
+            <tr><td class="text-muted small ps-3">الرقم القومي</td>
+                <td class="fw-500"><%= patient.national_id %></td></tr>
+            <% } %>
+            <% if (patient.birth_date) { %>
+            <tr><td class="text-muted small ps-3">تاريخ الميلاد</td>
+                <td class="fw-500"><%= new Date(patient.birth_date).toLocaleDateString('ar-EG') %></td></tr>
+            <% } %>
+            <% if (patient.address) { %>
+            <tr><td class="text-muted small ps-3">العنوان</td>
+                <td class="fw-500"><%= patient.address %></td></tr>
+            <% } %>
+            <tr><td class="text-muted small ps-3">تاريخ التسجيل</td>
+                <td class="fw-500"><%= new Date(patient.created_at).toLocaleDateString('ar-EG') %></td></tr>
+          </table>
+        </div>
+        <% if (patient.notes) { %>
+        <div class="card-footer bg-warning-subtle border-0">
+          <div class="small text-warning-emphasis">
+            <i class="bi bi-sticky me-1"></i><strong>ملاحظات:</strong> <%= patient.notes %>
+          </div>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Test History -->
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>التحاليل السابقة</h6>
+        </div>
+        <div class="card-body p-0" style="max-height:280px;overflow-y:auto">
+          <% if (testHistory.length === 0) { %>
+            <div class="text-center py-4 text-muted small">لا توجد تحاليل سابقة</div>
+          <% } else { %>
+          <table class="table table-sm mb-0">
+            <thead class="table-light">
+              <tr><th>التحليل</th><th class="text-center">المرات</th><th>آخر مرة</th></tr>
+            </thead>
+            <tbody>
+              <% testHistory.forEach(t => { %>
+              <tr>
+                <td>
+                  <div class="fw-500 small"><%= t.test_name %></div>
+                  <div class="text-muted" style="font-size:11px"><%= t.test_category %></div>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-primary-subtle text-primary"><%= t.times_done %>x</span>
+                </td>
+                <td class="text-muted" style="font-size:11px">
+                  <%= new Date(t.last_date).toLocaleDateString('ar-EG') %>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+          <% } %>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Left column: invoices history -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h6 class="mb-0"><i class="bi bi-receipt me-2"></i>سجل الفواتير (<%= invoices.length %>)</h6>
+          <a href="/invoices/new?patient_id=<%= patient.id %>" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus me-1"></i>فاتورة جديدة
+          </a>
+        </div>
+        <% if (invoices.length === 0) { %>
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-receipt fs-1 d-block mb-2"></i>
+            لا توجد فواتير لهذا المريض
+          </div>
+        <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>رقم الفاتورة</th>
+                <th>التحاليل</th>
+                <th>الإجمالي</th>
+                <th>المدفوع</th>
+                <th>الباقي</th>
+                <th>حالة الدفع</th>
+                <th>المختبر</th>
+                <th>التاريخ</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% invoices.forEach(inv => {
+                   const tot  = parseFloat(inv.total_amount);
+                   const paid = parseFloat(inv.paid_amount);
+                   const rem  = parseFloat(inv.remaining_amount);
+                   const pct  = tot > 0 ? Math.round((paid/tot)*100) : 0;
+              %>
+              <tr>
+                <td>
+                  <a href="/invoices/<%= inv.id %>" class="text-primary fw-500 text-decoration-none">
+                    <%= inv.invoice_number %>
+                  </a>
+                </td>
+                <td><span class="badge bg-secondary-subtle text-secondary"><%= inv.item_count %> تحليل</span></td>
+                <td class="fw-600"><%= tot.toLocaleString('ar-EG') %> ج</td>
+                <td class="text-success fw-600"><%= paid.toLocaleString('ar-EG') %> ج</td>
+                <td class="<%= rem > 0 ? 'text-danger' : 'text-success' %> fw-600">
+                  <%= rem.toLocaleString('ar-EG') %> ج
+                </td>
+                <td>
+                  <% if (inv.payment_status === 'paid') { %>
+                    <span class="pay-badge pay-badge-paid"><i class="bi bi-check-circle-fill"></i> مدفوع</span>
+                  <% } else if (inv.payment_status === 'partial') { %>
+                    <div>
+                      <span class="pay-badge pay-badge-partial"><i class="bi bi-circle-half"></i> جزئي</span>
+                      <div class="progress mt-1" style="height:3px;width:55px">
+                        <div class="progress-bar bg-warning" style="width:<%= pct %>%"></div>
+                      </div>
+                    </div>
+                  <% } else { %>
+                    <span class="pay-badge pay-badge-unpaid"><i class="bi bi-x-circle-fill"></i> غير مدفوع</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (inv.status === 'completed') { %>
+                    <span class="badge bg-success-subtle text-success">مكتمل</span>
+                  <% } else { %>
+                    <span class="badge bg-warning-subtle text-warning">معلق</span>
+                  <% } %>
+                </td>
+                <td class="text-muted small"><%= new Date(inv.created_at).toLocaleDateString('ar-EG') %></td>
+                <td>
+                  <a href="/invoices/<%= inv.id %>" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form action="/patients/<%= patient.id %>?_method=PUT" method="POST" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">تعديل بيانات المريض</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-500">الاسم الكامل <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="full_name" value="<%= patient.full_name %>" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-500">النوع</label>
+            <select class="form-select" name="gender">
+              <option value="ذكر"  <%= patient.gender === 'ذكر'  ? 'selected' : '' %>>ذكر</option>
+              <option value="أنثى" <%= patient.gender === 'أنثى' ? 'selected' : '' %>>أنثى</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-500">فصيلة الدم</label>
+            <select class="form-select" name="blood_type">
+              <option value="">غير معروفة</option>
+              <% ['A+','A-','B+','B-','AB+','AB-','O+','O-'].forEach(bt => { %>
+              <option value="<%= bt %>" <%= patient.blood_type === bt ? 'selected' : '' %>><%= bt %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-500">الهاتف الأساسي</label>
+            <input type="tel" class="form-control" name="phone" value="<%= patient.phone || '' %>">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-500">هاتف بديل</label>
+            <input type="tel" class="form-control" name="phone2" value="<%= patient.phone2 || '' %>">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-500">تاريخ الميلاد</label>
+            <input type="date" class="form-control" name="birth_date"
+                   value="<%= patient.birth_date ? patient.birth_date.toISOString().split('T')[0] : '' %>">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-500">الرقم القومي</label>
+            <input type="text" class="form-control" name="national_id" value="<%= patient.national_id || '' %>">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-500">العنوان</label>
+            <input type="text" class="form-control" name="address" value="<%= patient.address || '' %>">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-500">ملاحظات طبية</label>
+            <textarea class="form-control" name="notes" rows="2"><%= patient.notes || '' %></textarea>
+          </div>
+          <input type="hidden" name="_method" value="PUT">
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <form action="/patients/<%= patient.id %>?_method=DELETE" method="POST"
+              onsubmit="return confirm('حذف المريض وكل بياناته؟')">
+          <input type="hidden" name="_method" value="DELETE">
+          <button type="submit" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-trash me-1"></i>حذف المريض
+          </button>
+        </form>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+          <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

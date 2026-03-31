@@ -1,0 +1,185 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+
+  <div class="page-header">
+    <div>
+      <h4 class="page-title">الفواتير</h4>
+      <p class="text-muted small mb-0"><%= invoices.length %> نتيجة</p>
+    </div>
+    <a href="/invoices/new" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>طلب جديد
+    </a>
+  </div>
+
+  <!-- Financial Summary -->
+  <div class="row g-2 mb-3">
+    <div class="col-4">
+      <div class="stat-card text-center py-2">
+        <div class="small text-muted">إجمالي الفواتير</div>
+        <div class="fw-700 fs-5"><%= totalRevenue.toLocaleString('ar-EG') %> ج</div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="stat-card text-center py-2">
+        <div class="small text-muted">المحصّل</div>
+        <div class="fw-700 fs-5 text-success"><%= totalPaid.toLocaleString('ar-EG') %> ج</div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="stat-card text-center py-2">
+        <div class="small text-muted">المتبقي</div>
+        <div class="fw-700 fs-5 <%= totalRemaining > 0 ? 'text-danger' : 'text-success' %>">
+          <%= totalRemaining.toLocaleString('ar-EG') %> ج
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <form method="GET" action="/invoices" class="card shadow-sm mb-3">
+    <div class="card-body py-2">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <input type="search" name="search" class="form-control form-control-sm"
+                 placeholder="بحث بالاسم أو الفاتورة أو الهاتف..."
+                 value="<%= search %>">
+        </div>
+        <div class="col-md-2">
+          <select name="status" class="form-select form-select-sm">
+            <option value="">حالة المختبر</option>
+            <option value="pending"   <%= status === 'pending'   ? 'selected' : '' %>>معلق</option>
+            <option value="completed" <%= status === 'completed' ? 'selected' : '' %>>مكتمل</option>
+            <option value="cancelled" <%= status === 'cancelled' ? 'selected' : '' %>>ملغي</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select name="payment_status" class="form-select form-select-sm">
+            <option value="">حالة الدفع</option>
+            <option value="unpaid"  <%= payment_status === 'unpaid'  ? 'selected' : '' %>>غير مدفوع</option>
+            <option value="partial" <%= payment_status === 'partial' ? 'selected' : '' %>>جزئي</option>
+            <option value="paid"    <%= payment_status === 'paid'    ? 'selected' : '' %>>مدفوع</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <input type="date" name="from" class="form-control form-control-sm" value="<%= from %>" title="من تاريخ">
+        </div>
+        <div class="col-md-2">
+          <input type="date" name="to"   class="form-control form-control-sm" value="<%= to %>"   title="إلى تاريخ">
+        </div>
+        <div class="col-md-1 d-flex gap-1">
+          <button type="submit" class="btn btn-sm btn-primary flex-fill">
+            <i class="bi bi-search"></i>
+          </button>
+          <a href="/invoices" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-x"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Table -->
+  <div class="card shadow-sm">
+    <% if (invoices.length === 0) { %>
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+        <p class="mb-0">لا توجد فواتير تطابق البحث</p>
+      </div>
+    <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>رقم الفاتورة</th>
+            <th>المريض</th>
+            <th>التحاليل</th>
+            <th>الإجمالي</th>
+            <th>المدفوع</th>
+            <th>الباقي</th>
+            <th>الدفع</th>
+            <th>المختبر</th>
+            <th>التاريخ</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% invoices.forEach(inv => {
+               const total     = parseFloat(inv.total_amount);
+               const paid      = parseFloat(inv.paid_amount);
+               const remaining = parseFloat(inv.remaining_amount);
+               const pct       = total > 0 ? Math.round((paid / total) * 100) : 0;
+          %>
+          <tr>
+            <td>
+              <a href="/invoices/<%= inv.id %>" class="text-primary fw-500 text-decoration-none">
+                <%= inv.invoice_number %>
+              </a>
+            </td>
+            <td>
+              <div class="fw-500"><%= inv.patient_name %></div>
+              <% if (inv.patient_phone) { %>
+                <div class="text-muted small"><%= inv.patient_phone %></div>
+              <% } %>
+            </td>
+            <td>
+              <span class="badge bg-secondary-subtle text-secondary">
+                <%= inv.item_count %> تحليل
+              </span>
+            </td>
+            <td class="fw-600"><%= total.toLocaleString('ar-EG') %> ج</td>
+            <td class="text-success fw-600"><%= paid.toLocaleString('ar-EG') %> ج</td>
+            <td class="<%= remaining > 0 ? 'text-danger' : 'text-success' %> fw-600">
+              <%= remaining.toLocaleString('ar-EG') %> ج
+            </td>
+            <td>
+              <% if (inv.payment_status === 'paid') { %>
+                <span class="badge bg-success-subtle text-success">مدفوع</span>
+              <% } else if (inv.payment_status === 'partial') { %>
+                <div>
+                  <span class="badge bg-warning-subtle text-warning">جزئي <%= pct %>%</span>
+                  <div class="progress mt-1" style="height:4px;width:60px">
+                    <div class="progress-bar bg-warning" style="width:<%= pct %>%"></div>
+                  </div>
+                </div>
+              <% } else { %>
+                <span class="badge bg-danger-subtle text-danger">غير مدفوع</span>
+              <% } %>
+            </td>
+            <td>
+              <% if (inv.status === 'completed') { %>
+                <span class="badge bg-success-subtle text-success">مكتمل</span>
+              <% } else if (inv.status === 'cancelled') { %>
+                <span class="badge bg-danger-subtle text-danger">ملغي</span>
+              <% } else { %>
+                <span class="badge bg-warning-subtle text-warning">معلق</span>
+              <% } %>
+            </td>
+            <td class="text-muted small">
+              <%= new Date(inv.created_at).toLocaleDateString('ar-EG') %>
+            </td>
+            <td>
+              <div class="d-flex gap-1">
+                <a href="/invoices/<%= inv.id %>" class="btn btn-sm btn-outline-primary" title="عرض">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <form action="/invoices/<%= inv.id %>?_method=DELETE" method="POST"
+                      onsubmit="return confirm('حذف الفاتورة نهائياً؟')">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="حذف">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+  </div>
+
+</div>
+
+<%- include('../partials/footer') %>

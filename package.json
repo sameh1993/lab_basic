@@ -1,0 +1,21 @@
+{
+  "name": "lab-basic",
+  "version": "1.0.0",
+  "description": "نظام إدارة مركز تحاليل - الإصدار الأساسي",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mysql2": "^3.6.5",
+    "ejs": "^3.1.9",
+    "qrcode": "^1.5.3",
+    "method-override": "^3.0.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

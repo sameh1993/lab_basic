@@ -1,0 +1,335 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+
+<%
+  const total     = parseFloat(invoice.total_amount);
+  const paid      = parseFloat(invoice.paid_amount);
+  const remaining = parseFloat(invoice.remaining_amount);
+  const pct       = total > 0 ? Math.round((paid / total) * 100) : 0;
+  const payStatusLabel = invoice.payment_status === 'paid'    ? 'مدفوع بالكامل'   :
+                         invoice.payment_status === 'partial' ? 'مدفوع جزئياً'    :
+                                                                'غير مدفوع';
+%>
+
+<div class="main-content">
+
+  <!-- Toolbar -->
+  <div class="page-header no-print">
+    <div>
+      <h4 class="page-title mb-1"><%= invoice.invoice_number %></h4>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Lab status badge -->
+        <% if (invoice.status === 'completed') { %>
+          <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>مكتمل</span>
+        <% } else if (invoice.status === 'cancelled') { %>
+          <span class="badge bg-danger">ملغي</span>
+        <% } else { %>
+          <span class="badge bg-warning text-dark"><i class="bi bi-hourglass me-1"></i>معلق</span>
+        <% } %>
+        <!-- Patient link -->
+        <% if (invoice.p_id) { %>
+          <a href="/patients/<%= invoice.p_id %>" class="badge bg-primary-subtle text-primary text-decoration-none">
+            <i class="bi bi-person me-1"></i><%= invoice.p_full_name %>
+          </a>
+        <% } %>
+        <span class="text-muted small">
+          <i class="bi bi-calendar3 me-1"></i>
+          <%= new Date(invoice.created_at).toLocaleString('ar-EG') %>
+        </span>
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="/invoices" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-right me-1"></i>الكل
+      </a>
+      <a href="/invoices/new" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-plus me-1"></i>طلب جديد
+      </a>
+      <form action="/invoices/<%= invoice.id %>/status" method="POST" class="d-inline">
+        <% if (invoice.status === 'pending') { %>
+          <input type="hidden" name="status" value="completed">
+          <button type="submit" class="btn btn-success btn-sm">
+            <i class="bi bi-check-circle me-1"></i>تأكيد الاستلام
+          </button>
+        <% } else if (invoice.status === 'completed') { %>
+          <input type="hidden" name="status" value="pending">
+          <button type="submit" class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>معلق
+          </button>
+        <% } %>
+      </form>
+      <% if (remaining > 0) { %>
+      <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#payModal">
+        <i class="bi bi-cash-coin me-1"></i>إضافة دفعة
+      </button>
+      <% } %>
+      <button onclick="window.print()" class="btn btn-primary btn-sm">
+        <i class="bi bi-printer me-1"></i>طباعة
+      </button>
+      <form action="/invoices/<%= invoice.id %>?_method=DELETE" method="POST"
+            onsubmit="return confirm('حذف الفاتورة نهائياً؟')">
+        <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══ بطاقة حالة الدفع البارزة ══ -->
+  <div class="pay-status-card pay-status-<%= invoice.payment_status %> no-print mb-3">
+    <div class="psc-right">
+      <div class="psc-icon">
+        <% if (invoice.payment_status === 'paid') { %>
+          <i class="bi bi-check-circle-fill"></i>
+        <% } else if (invoice.payment_status === 'partial') { %>
+          <i class="bi bi-circle-half"></i>
+        <% } else { %>
+          <i class="bi bi-x-circle-fill"></i>
+        <% } %>
+      </div>
+      <div>
+        <div class="psc-label"><%= payStatusLabel %></div>
+        <div class="psc-sub">
+          <% if (invoice.payment_status === 'partial') { %>
+            تم دفع <%= pct %>% من إجمالي الفاتورة
+          <% } else if (invoice.payment_status === 'paid') { %>
+            تم سداد كامل المبلغ بنجاح
+          <% } else { %>
+            لم يتم سداد أي مبلغ حتى الآن
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <div class="psc-amounts">
+      <div class="psc-amount-col">
+        <div class="psc-amount-label">الإجمالي</div>
+        <div class="psc-amount-val"><%= total.toLocaleString('ar-EG') %> ج</div>
+      </div>
+      <div class="psc-divider"></div>
+      <div class="psc-amount-col">
+        <div class="psc-amount-label">المدفوع</div>
+        <div class="psc-amount-val psc-paid"><%= paid.toLocaleString('ar-EG') %> ج</div>
+      </div>
+      <div class="psc-divider"></div>
+      <div class="psc-amount-col">
+        <div class="psc-amount-label">الباقي</div>
+        <div class="psc-amount-val psc-remaining"><%= remaining.toLocaleString('ar-EG') %> ج</div>
+      </div>
+    </div>
+    <% if (invoice.payment_status !== 'unpaid') { %>
+    <div class="psc-bar-wrap">
+      <div class="psc-bar">
+        <div class="psc-bar-fill" style="width:<%= pct %>%"></div>
+      </div>
+      <div class="psc-pct"><%= pct %>%</div>
+    </div>
+    <% } %>
+  </div>
+
+  <!-- Invoice Paper -->
+  <div class="invoice-wrap" id="invoicePrint">
+
+    <!-- Header -->
+    <div class="invoice-header">
+      <div class="lab-brand">
+        <div class="lab-logo"><i class="bi bi-activity"></i></div>
+        <div>
+          <div class="lab-name"><%= LAB_NAME %></div>
+          <div class="lab-sub"><%= LAB_ADDRESS %></div>
+          <div class="lab-sub">هاتف: <%= LAB_PHONE %></div>
+        </div>
+      </div>
+      <div class="invoice-meta">
+        <div class="invoice-title">فاتورة</div>
+        <div class="inv-num"><%= invoice.invoice_number %></div>
+        <div class="inv-date">
+          <%= new Date(invoice.created_at).toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'}) %>
+        </div>
+      </div>
+    </div>
+
+    <div class="inv-divider"></div>
+
+    <!-- Patient -->
+    <div class="patient-box">
+      <div class="patient-row">
+        <div class="patient-field">
+          <span class="pf-label">المريض</span>
+          <span class="pf-value"><%= invoice.patient_name %></span>
+        </div>
+        <div class="patient-field">
+          <span class="pf-label">النوع</span>
+          <span class="pf-value"><%= invoice.patient_gender %></span>
+        </div>
+        <% if (invoice.patient_age) { %>
+        <div class="patient-field">
+          <span class="pf-label">العمر</span>
+          <span class="pf-value"><%= invoice.patient_age %> سنة</span>
+        </div>
+        <% } %>
+        <% if (invoice.patient_phone) { %>
+        <div class="patient-field">
+          <span class="pf-label">الهاتف</span>
+          <span class="pf-value"><%= invoice.patient_phone %></span>
+        </div>
+        <% } %>
+        <% if (invoice.doctor_name) { %>
+        <div class="patient-field" style="grid-column:1/-1">
+          <span class="pf-label">الطبيب</span>
+          <span class="pf-value"><%= invoice.doctor_name %></span>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Tests Table -->
+    <table class="inv-table">
+      <thead>
+        <tr><th>#</th><th>اسم التحليل</th><th>التصنيف</th><th class="text-end">السعر</th></tr>
+      </thead>
+      <tbody>
+        <% items.forEach((item, i) => { %>
+        <tr>
+          <td class="text-muted"><%= i+1 %></td>
+          <td class="fw-500"><%= item.test_name %></td>
+          <td><span class="badge bg-light text-secondary border" style="font-size:11px"><%= item.test_category %></span></td>
+          <td class="text-end text-success fw-600"><%= parseFloat(item.price).toLocaleString('ar-EG') %> ج.م</td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <!-- Payment Summary (on invoice paper) -->
+    <div class="inv-payment-summary">
+      <div class="inv-pay-row">
+        <span>إجمالي التحاليل (<%= items.length %> تحليل)</span>
+        <span class="fw-700"><%= total.toLocaleString('ar-EG') %> ج.م</span>
+      </div>
+      <div class="inv-pay-row" style="color:#1D9E75">
+        <span>
+          المبلغ المدفوع
+          <% if (payments.length > 0) { %>
+            <span style="font-size:10px;opacity:.8">(<%= payments.length %> دفعة)</span>
+          <% } %>
+        </span>
+        <span class="fw-700">- <%= paid.toLocaleString('ar-EG') %> ج.م</span>
+      </div>
+      <div class="inv-pay-total-row">
+        <span class="fw-700">
+          <% if (remaining <= 0) { %>
+            ✓ تم السداد الكامل
+          <% } else { %>
+            الباقي على المريض
+          <% } %>
+        </span>
+        <span class="fw-800 fs-5" style="color:<%= remaining > 0 ? '#dc3545' : '#1D9E75' %>">
+          <%= remaining.toLocaleString('ar-EG') %> ج.م
+        </span>
+      </div>
+    </div>
+
+    <% if (invoice.notes) { %>
+    <div class="inv-notes"><strong>ملاحظات:</strong> <%= invoice.notes %></div>
+    <% } %>
+
+    <!-- Footer + QR -->
+    <div class="inv-footer">
+      <div class="inv-thanks">
+        <p class="mb-1 fw-500">شكراً لثقتكم بـ <%= LAB_NAME %></p>
+        <p class="text-muted small mb-1">وقت استلام النتائج: خلال 24 – 48 ساعة</p>
+        <p class="text-muted small mb-0">للاستفسار: <%= LAB_PHONE %></p>
+      </div>
+      <div class="inv-qr text-center">
+        <img src="<%= qrCode %>" alt="QR" width="100" height="100">
+        <div class="qr-label">امسح للتحقق</div>
+      </div>
+    </div>
+
+  </div><!-- /invoice-wrap -->
+
+  <!-- Payments History -->
+  <% if (payments.length > 0) { %>
+  <div class="card shadow-sm mt-3 no-print">
+    <div class="card-header">
+      <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>سجل المدفوعات</h6>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>#</th><th>المبلغ</th><th>طريقة الدفع</th><th>ملاحظة</th><th>التاريخ</th></tr>
+        </thead>
+        <tbody>
+          <% payments.forEach((p, i) => { %>
+          <tr>
+            <td class="text-muted"><%= i+1 %></td>
+            <td class="fw-600 text-success"><%= parseFloat(p.amount).toLocaleString('ar-EG') %> ج.م</td>
+            <td>
+              <% if (p.payment_method === 'cash') { %>
+                <span class="badge bg-success-subtle text-success"><i class="bi bi-cash me-1"></i>كاش</span>
+              <% } else if (p.payment_method === 'card') { %>
+                <span class="badge bg-info-subtle text-info"><i class="bi bi-credit-card me-1"></i>بطاقة</span>
+              <% } else { %>
+                <span class="badge bg-primary-subtle text-primary"><i class="bi bi-phone me-1"></i>تحويل</span>
+              <% } %>
+            </td>
+            <td class="text-muted small"><%= p.note || '—' %></td>
+            <td class="text-muted small"><%= new Date(p.created_at).toLocaleString('ar-EG') %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <% } %>
+
+</div><!-- /main-content -->
+
+<!-- Pay Modal -->
+<% if (remaining > 0) { %>
+<div class="modal fade" id="payModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <form action="/invoices/<%= invoice.id %>/pay" method="POST" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-cash-coin me-2 text-warning"></i>إضافة دفعة</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3 p-3 rounded" style="background:#fff8e1">
+          <div class="small text-muted">الباقي على المريض</div>
+          <div class="fs-3 fw-700 text-danger"><%= remaining.toLocaleString('ar-EG') %> ج.م</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-500">المبلغ <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="number" class="form-control" name="amount"
+                   min="0.5" max="<%= remaining %>" step="0.5"
+                   value="<%= remaining %>" required>
+            <span class="input-group-text">ج.م</span>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-500">طريقة الدفع</label>
+          <div class="d-flex gap-2 flex-wrap">
+            <label class="pay-method-chip"><input type="radio" name="payment_method" value="cash" checked>
+              <span><i class="bi bi-cash"></i> كاش</span></label>
+            <label class="pay-method-chip"><input type="radio" name="payment_method" value="card">
+              <span><i class="bi bi-credit-card"></i> بطاقة</span></label>
+            <label class="pay-method-chip"><input type="radio" name="payment_method" value="transfer">
+              <span><i class="bi bi-phone"></i> تحويل</span></label>
+          </div>
+        </div>
+        <div>
+          <label class="form-label fw-500">ملاحظة</label>
+          <input type="text" class="form-control" name="note" placeholder="دفعة ثانية، سداد باقي...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="submit" class="btn btn-warning fw-600">
+          <i class="bi bi-check-circle me-1"></i>تسجيل الدفعة
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<% } %>
+
+<%- include('../partials/footer') %>

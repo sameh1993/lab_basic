@@ -1,0 +1,329 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+  <div class="page-header">
+    <div>
+      <h4 class="page-title">طلب جديد</h4>
+      <p class="text-muted small mb-0">إنشاء فاتورة وتحديد التحاليل المطلوبة</p>
+    </div>
+    <a href="/invoices" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-right me-1"></i>الفواتير
+    </a>
+  </div>
+
+  <form action="/invoices" method="POST" id="invoiceForm">
+  <input type="hidden" name="patient_id" id="patientIdInput" value="<%= prePatient ? prePatient.id : '' %>">
+
+  <div class="row g-3">
+    <!-- Patient + Payment -->
+    <div class="col-lg-5">
+
+      <!-- Patient Search -->
+      <div class="card shadow-sm mb-3">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-person-search me-2"></i>المريض</h6>
+        </div>
+        <div class="card-body">
+          <!-- Autocomplete -->
+          <div class="mb-3 position-relative">
+            <label class="form-label fw-500 small">بحث في السجل</label>
+            <input type="text" class="form-control" id="patientSearch"
+                   placeholder="ابحث بالاسم أو الهاتف..."
+                   autocomplete="off"
+                   value="<%= prePatient ? prePatient.full_name : '' %>">
+            <div id="searchDropdown" class="patient-dropdown"></div>
+          </div>
+
+          <!-- Selected patient card -->
+          <div id="selectedPatientCard" class="<%= prePatient ? '' : 'd-none' %> mb-3">
+            <div class="selected-patient-box">
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="patient-avatar sm <%= prePatient && prePatient.gender === 'أنثى' ? 'female' : '' %>"
+                       id="selAvatar"><%= prePatient ? prePatient.full_name.charAt(0) : '' %></div>
+                  <div>
+                    <div class="fw-500 small" id="selName"><%= prePatient ? prePatient.full_name : '' %></div>
+                    <div class="text-muted" style="font-size:11px" id="selInfo">
+                      <% if (prePatient) { %>
+                        <%= prePatient.gender %><% if (prePatient.age) { %> · <%= prePatient.age %> سنة<% } %>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearPatient()">
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-1">
+            <label class="form-label fw-500">اسم المريض <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="patient_name" id="patientNameInput" required
+                   value="<%= prePatient ? prePatient.full_name : '' %>"
+                   placeholder="أو اكتب اسم مريض جديد">
+          </div>
+          <div class="row g-2 mt-1">
+            <div class="col-7">
+              <label class="form-label fw-500 small">رقم الهاتف</label>
+              <input type="tel" class="form-control form-control-sm" name="patient_phone"
+                     id="patientPhone"
+                     value="<%= prePatient ? (prePatient.phone || '') : '' %>"
+                     placeholder="01xxxxxxxxx">
+            </div>
+            <div class="col-5">
+              <label class="form-label fw-500 small">العمر</label>
+              <input type="number" class="form-control form-control-sm" name="patient_age"
+                     id="patientAge"
+                     value="<%= prePatient ? (prePatient.age || '') : '' %>"
+                     min="1" max="120" placeholder="سنة">
+            </div>
+          </div>
+          <div class="mt-2">
+            <label class="form-label fw-500 small">النوع</label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="patient_gender" value="ذكر"
+                       id="gM" <%= (!prePatient || prePatient.gender === 'ذكر') ? 'checked' : '' %>>
+                <label class="form-check-label" for="gM">ذكر</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="patient_gender" value="أنثى"
+                       id="gF" <%= (prePatient && prePatient.gender === 'أنثى') ? 'checked' : '' %>>
+                <label class="form-check-label" for="gF">أنثى</label>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2">
+            <label class="form-label fw-500 small">الطبيب المعالج</label>
+            <input type="text" class="form-control form-control-sm" name="doctor_name" placeholder="د/ اسم الطبيب">
+          </div>
+          <div class="mt-2">
+            <label class="form-label fw-500 small">ملاحظات</label>
+            <textarea class="form-control form-control-sm" name="notes" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Card -->
+      <div class="card shadow-sm border-success">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-cash-coin me-2 text-success"></i>الحساب والدفع</h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-muted small">عدد التحاليل</span>
+            <span class="badge bg-success rounded-pill" id="selectedCount">0</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center pb-2 border-bottom">
+            <span class="fw-600">إجمالي الفاتورة</span>
+            <span class="fs-5 fw-700" id="totalDisplay">0 ج.م</span>
+          </div>
+          <div class="mt-3 mb-2">
+            <label class="form-label fw-500 small">
+              <i class="bi bi-cash me-1 text-success"></i>المبلغ المدفوع (مقدم)
+            </label>
+            <div class="input-group input-group-sm">
+              <input type="number" class="form-control" name="paid_amount" id="paidInput"
+                     min="0" step="0.5" placeholder="0" oninput="updatePaySummary()">
+              <span class="input-group-text">ج.م</span>
+            </div>
+            <div class="d-flex gap-1 mt-2">
+              <button type="button" class="btn btn-outline-success btn-sm" onclick="setFullPay()">كامل</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setHalfPay()">نصف</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearPay()">صفر</button>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-500 small">طريقة الدفع</label>
+            <div class="d-flex gap-2 flex-wrap">
+              <label class="pay-method-chip"><input type="radio" name="payment_method" value="cash" checked>
+                <span><i class="bi bi-cash"></i> كاش</span></label>
+              <label class="pay-method-chip"><input type="radio" name="payment_method" value="card">
+                <span><i class="bi bi-credit-card"></i> بطاقة</span></label>
+              <label class="pay-method-chip"><input type="radio" name="payment_method" value="transfer">
+                <span><i class="bi bi-phone"></i> تحويل</span></label>
+            </div>
+          </div>
+          <div class="remaining-box">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="small fw-500">الباقي على المريض</span>
+              <span class="fw-700 fs-5" id="remainingDisplay" style="color:#dc3545">0 ج.م</span>
+            </div>
+            <div class="progress mt-2" style="height:7px;border-radius:4px">
+              <div class="progress-bar bg-success" id="payProgress" style="width:0%"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-1">
+              <span class="small text-success" id="paidPct">0% مدفوع</span>
+              <span class="small text-muted"   id="remainPct">100% باقي</span>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-success w-100 mt-3" id="submitBtn" disabled>
+            <i class="bi bi-printer me-2"></i>إنشاء الفاتورة
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tests Catalog -->
+    <div class="col-lg-7">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h6 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>اختر التحاليل</h6>
+          <input type="search" class="form-control form-control-sm" style="max-width:180px"
+                 placeholder="بحث..." id="testSearch">
+        </div>
+        <div class="card-body p-2" style="max-height:560px;overflow-y:auto">
+          <% Object.keys(grouped).sort().forEach(cat => { %>
+          <div class="test-category mb-2">
+            <div class="category-label"><i class="bi bi-tag me-1"></i><%= cat %></div>
+            <div class="row g-1">
+              <% grouped[cat].forEach(test => { %>
+              <div class="col-6 col-xl-4 test-item-wrap"
+                   data-name="<%= test.name.toLowerCase() %>"
+                   data-cat="<%= cat.toLowerCase() %>">
+                <label class="test-item">
+                  <input type="checkbox" name="test_ids" value="<%= test.id %>"
+                         class="test-check" data-price="<%= test.price %>">
+                  <div class="test-item-content">
+                    <div class="test-name"><%= test.name %></div>
+                    <div class="test-price"><%= parseFloat(test.price).toLocaleString('ar-EG') %> ج</div>
+                  </div>
+                  <div class="test-check-indicator"><i class="bi bi-check"></i></div>
+                </label>
+              </div>
+              <% }) %>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>
+
+<script>
+let currentTotal = 0;
+const checks      = document.querySelectorAll('.test-check');
+const countEl     = document.getElementById('selectedCount');
+const totalEl     = document.getElementById('totalDisplay');
+const submitBtn   = document.getElementById('submitBtn');
+const paidInput   = document.getElementById('paidInput');
+const remainEl    = document.getElementById('remainingDisplay');
+const progressEl  = document.getElementById('payProgress');
+const paidPctEl   = document.getElementById('paidPct');
+const remainPctEl = document.getElementById('remainPct');
+
+function updateTotal() {
+  let total = 0, count = 0;
+  checks.forEach(c => { if (c.checked) { total += parseFloat(c.dataset.price); count++; } });
+  currentTotal          = total;
+  countEl.textContent   = count;
+  totalEl.textContent   = total.toLocaleString('ar-EG') + ' ج.م';
+  submitBtn.disabled    = count === 0;
+  updatePaySummary();
+}
+function updatePaySummary() {
+  const paid      = Math.min(Math.max(parseFloat(paidInput.value)||0, 0), currentTotal);
+  const remaining = currentTotal - paid;
+  const pct       = currentTotal > 0 ? Math.round((paid/currentTotal)*100) : 0;
+  remainEl.textContent    = remaining.toLocaleString('ar-EG') + ' ج.م';
+  remainEl.style.color    = remaining > 0 ? '#dc3545' : '#1D9E75';
+  progressEl.style.width  = pct + '%';
+  paidPctEl.textContent   = pct + '% مدفوع';
+  remainPctEl.textContent = (100-pct) + '% باقي';
+}
+function setFullPay()  { paidInput.value = currentTotal;              updatePaySummary(); }
+function setHalfPay()  { paidInput.value = (currentTotal/2).toFixed(2); updatePaySummary(); }
+function clearPay()    { paidInput.value = '';                        updatePaySummary(); }
+
+checks.forEach(c => {
+  c.addEventListener('change', () => {
+    c.closest('.test-item').classList.toggle('selected', c.checked);
+    updateTotal();
+  });
+});
+
+document.getElementById('testSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  document.querySelectorAll('.test-item-wrap').forEach(w => {
+    w.style.display = (!q || w.dataset.name.includes(q) || w.dataset.cat.includes(q)) ? '' : 'none';
+  });
+  document.querySelectorAll('.test-category').forEach(cat => {
+    cat.style.display = [...cat.querySelectorAll('.test-item-wrap')].some(w => w.style.display !== 'none') ? '' : 'none';
+  });
+});
+
+// ── Patient Autocomplete ────────────────────────
+let searchTimeout;
+const searchInput    = document.getElementById('patientSearch');
+const dropdown       = document.getElementById('searchDropdown');
+const patientIdInput = document.getElementById('patientIdInput');
+const nameInput      = document.getElementById('patientNameInput');
+const phoneInput     = document.getElementById('patientPhone');
+const ageInput       = document.getElementById('patientAge');
+const selCard        = document.getElementById('selectedPatientCard');
+const selAvatar      = document.getElementById('selAvatar');
+const selName        = document.getElementById('selName');
+const selInfo        = document.getElementById('selInfo');
+
+searchInput.addEventListener('input', function() {
+  clearTimeout(searchTimeout);
+  const q = this.value.trim();
+  if (!q) { dropdown.innerHTML = ''; dropdown.style.display = 'none'; return; }
+  searchTimeout = setTimeout(async () => {
+    try {
+      const res  = await fetch(`/patients/search?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      if (!data.length) {
+        dropdown.innerHTML = '<div class="dd-empty">لا توجد نتائج - سيُنشأ كمريض جديد</div>';
+      } else {
+        dropdown.innerHTML = data.map(p => `
+          <div class="dd-item" onclick="selectPatient(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+            <div class="dd-avatar ${p.gender==='أنثى'?'female':''}">${p.full_name.charAt(0)}</div>
+            <div class="dd-info">
+              <div class="dd-name">${p.full_name}</div>
+              <div class="dd-sub">${p.gender}${p.age?' · '+p.age+' سنة':''}${p.phone?' · '+p.phone:''}</div>
+            </div>
+          </div>`).join('');
+      }
+      dropdown.style.display = 'block';
+    } catch(e) {}
+  }, 300);
+});
+
+function selectPatient(p) {
+  patientIdInput.value = p.id;
+  nameInput.value      = p.full_name;
+  phoneInput.value     = p.phone  || '';
+  ageInput.value       = p.age    || '';
+  document.getElementById(p.gender === 'أنثى' ? 'gF' : 'gM').checked = true;
+  selAvatar.textContent  = p.full_name.charAt(0);
+  selAvatar.className    = `patient-avatar sm ${p.gender==='أنثى'?'female':''}`;
+  selName.textContent    = p.full_name;
+  selInfo.textContent    = p.gender + (p.age ? ' · ' + p.age + ' سنة' : '');
+  selCard.classList.remove('d-none');
+  searchInput.value = p.full_name;
+  dropdown.style.display = 'none';
+}
+
+function clearPatient() {
+  patientIdInput.value = '';
+  nameInput.value      = '';
+  phoneInput.value     = '';
+  ageInput.value       = '';
+  searchInput.value    = '';
+  selCard.classList.add('d-none');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#patientSearch') && !e.target.closest('#searchDropdown')) {
+    dropdown.style.display = 'none';
+  }
+});
+</script>

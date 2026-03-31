@@ -1,0 +1,736 @@
+/* ================================================
+   نظام إدارة مركز التحاليل - Basic
+   ================================================ */
+
+:root {
+  --lab-primary:       #1D9E75;
+  --lab-primary-dark:  #0F6E56;
+  --lab-primary-light: #E1F5EE;
+  --lab-sidebar-w:     240px;
+  --lab-border:        #e9ecef;
+  --lab-text:          #212529;
+  --lab-muted:         #6c757d;
+}
+
+/* ── Base ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: 'Cairo', sans-serif;
+  background: #f4f6f9;
+  color: var(--lab-text);
+}
+
+.fw-500 { font-weight: 500 !important; }
+.fw-600 { font-weight: 600 !important; }
+.fw-700 { font-weight: 700 !important; }
+
+/* ── Sidebar ───────────────────────────────────── */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--lab-sidebar-w);
+  background: #ffffff;
+  border-left: 1px solid var(--lab-border);
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+  overflow-y: auto;
+  transition: transform 0.25s ease;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px;
+  border-bottom: 1px solid var(--lab-border);
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--lab-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--lab-text);
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 10px 8px;
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lab-muted);
+  padding: 8px 10px 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: var(--lab-muted);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 2px;
+  transition: all 0.15s;
+}
+
+.nav-item:hover {
+  background: var(--lab-primary-light);
+  color: var(--lab-primary-dark);
+}
+
+.nav-item.active {
+  background: var(--lab-primary-light);
+  color: var(--lab-primary);
+  font-weight: 600;
+  border-right: 3px solid var(--lab-primary);
+}
+
+.nav-item i { font-size: 16px; }
+
+.sidebar-plan {
+  padding: 14px;
+  border-top: 1px solid var(--lab-border);
+  background: #fafafa;
+}
+
+.plan-header {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.plan-sub {
+  font-size: 11px;
+  color: var(--lab-muted);
+}
+
+/* Mobile sidebar */
+.sidebar-toggle {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 300;
+  background: var(--lab-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 190;
+  display: none;
+}
+
+.sidebar-backdrop.show { display: block; }
+
+@media (max-width: 991px) {
+  .sidebar { transform: translateX(100%); }
+  .sidebar.open { transform: translateX(0); }
+}
+
+/* ── Main Content ──────────────────────────────── */
+.main-content {
+  margin-right: var(--lab-sidebar-w);
+  min-height: 100vh;
+  padding: 24px;
+}
+
+@media (max-width: 991px) {
+  .main-content { margin-right: 0; padding: 20px 16px 16px; }
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+/* ── Stat Cards ────────────────────────────────── */
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  height: 100%;
+}
+
+.stat-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--lab-muted);
+}
+
+/* ── Cards ─────────────────────────────────────── */
+.card {
+  border: 1px solid var(--lab-border) !important;
+  border-radius: 12px !important;
+}
+
+.card-header {
+  background: #fafafa !important;
+  border-bottom: 1px solid var(--lab-border) !important;
+  padding: 12px 16px !important;
+  font-size: 14px;
+}
+
+/* ── Tables ─────────────────────────────────────── */
+.table th {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--lab-muted);
+}
+
+.table td { font-size: 14px; }
+
+/* ── Buttons ────────────────────────────────────── */
+.btn-primary {
+  background: var(--lab-primary) !important;
+  border-color: var(--lab-primary) !important;
+}
+
+.btn-primary:hover {
+  background: var(--lab-primary-dark) !important;
+  border-color: var(--lab-primary-dark) !important;
+}
+
+.btn-success {
+  background: var(--lab-primary) !important;
+  border-color: var(--lab-primary) !important;
+}
+
+/* ── Test Items (new invoice) ───────────────────── */
+.test-category { margin-bottom: 8px; }
+
+.category-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--lab-muted);
+  padding: 6px 4px 4px;
+  border-bottom: 1px solid var(--lab-border);
+  margin-bottom: 6px;
+}
+
+.test-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid var(--lab-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  background: white;
+  user-select: none;
+}
+
+.test-item:hover {
+  border-color: var(--lab-primary);
+  background: var(--lab-primary-light);
+}
+
+.test-item.selected {
+  border-color: var(--lab-primary);
+  background: var(--lab-primary-light);
+}
+
+.test-item input[type="checkbox"] { display: none; }
+
+.test-item-content { flex: 1; }
+
+.test-name {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--lab-text);
+}
+
+.test-price {
+  font-size: 11px;
+  color: var(--lab-primary);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.test-check-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--lab-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: transparent;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.test-item.selected .test-check-indicator {
+  background: var(--lab-primary);
+  border-color: var(--lab-primary);
+  color: white;
+}
+
+/* ── Invoice Print Styles ───────────────────────── */
+.invoice-wrap {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--lab-border);
+  padding: 32px;
+  max-width: 700px;
+  margin: 0 auto;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.lab-brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.lab-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: var(--lab-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.lab-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--lab-primary-dark);
+}
+
+.lab-sub {
+  font-size: 12px;
+  color: var(--lab-muted);
+  margin-top: 2px;
+}
+
+.invoice-meta { text-align: left; }
+
+.invoice-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--lab-muted);
+}
+
+.inv-num {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--lab-primary);
+}
+
+.inv-date {
+  font-size: 13px;
+  color: var(--lab-muted);
+}
+
+.inv-divider {
+  height: 3px;
+  background: linear-gradient(to left, var(--lab-primary), #9FE1CB);
+  border-radius: 3px;
+  margin: 0 0 20px;
+}
+
+/* Patient box */
+.patient-box {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.patient-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.patient-field { display: flex; flex-direction: column; }
+
+.pf-label {
+  font-size: 11px;
+  color: var(--lab-muted);
+  margin-bottom: 2px;
+}
+
+.pf-value {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Invoice table */
+.inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0;
+  font-size: 14px;
+}
+
+.inv-table th {
+  padding: 10px 12px;
+  background: #f8f9fa;
+  border-bottom: 2px solid var(--lab-border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--lab-muted);
+  text-align: right;
+}
+
+.inv-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: right;
+}
+
+.inv-table tfoot .total-row td {
+  padding: 14px 12px;
+  border-top: 2px solid var(--lab-primary);
+  border-bottom: none;
+  background: var(--lab-primary-light);
+}
+
+.total-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--lab-primary) !important;
+}
+
+.inv-notes {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-top: 16px;
+}
+
+.inv-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--lab-border);
+}
+
+.inv-thanks { font-size: 13px; }
+
+.inv-qr img {
+  border: 3px solid var(--lab-primary-light);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.qr-label {
+  font-size: 10px;
+  color: var(--lab-muted);
+  margin-top: 4px;
+}
+
+/* ── Print ──────────────────────────────────────── */
+@media print {
+  .sidebar,
+  .sidebar-toggle,
+  .sidebar-backdrop,
+  .page-header,
+  .no-print {
+    display: none !important;
+  }
+
+  .main-content {
+    margin-right: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  .invoice-wrap {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 16px !important;
+    max-width: 100% !important;
+  }
+
+  body { background: white !important; }
+}
+
+/* ── Progress bar ───────────────────────────────── */
+.bg-success { background-color: var(--lab-primary) !important; }
+.text-success { color: var(--lab-primary) !important; }
+.bg-success-subtle { background-color: var(--lab-primary-light) !important; }
+
+/* ── Misc ───────────────────────────────────────── */
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--lab-primary);
+  box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.15);
+}
+
+/* ── Payment Components ─────────────────────────── */
+
+/* Payment method chips */
+.pay-method-chip {
+  cursor: pointer;
+  display: inline-flex;
+}
+
+.pay-method-chip input[type="radio"] {
+  display: none;
+}
+
+.pay-method-chip span {
+  padding: 5px 12px;
+  border: 1.5px solid var(--lab-border);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--lab-muted);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.pay-method-chip input:checked + span {
+  border-color: var(--lab-primary);
+  background: var(--lab-primary-light);
+  color: var(--lab-primary-dark);
+  font-weight: 600;
+}
+
+.pay-method-chip:hover span {
+  border-color: var(--lab-primary);
+}
+
+/* Remaining box inside new invoice form */
+.remaining-box {
+  background: #f8f9fa;
+  border: 1px solid var(--lab-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 4px;
+}
+
+/* Invoice payment summary table */
+.inv-payment-summary {
+  border-top: 2px solid var(--lab-primary);
+  margin-top: 0;
+  padding: 4px 12px;
+  background: #fafafa;
+  border-radius: 0 0 4px 4px;
+}
+
+.inv-pay-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+  border-bottom: 1px dashed #eee;
+}
+
+.inv-pay-row:last-of-type {
+  border-bottom: none;
+}
+
+.inv-pay-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0 4px;
+  border-top: 2px solid var(--lab-primary);
+  margin-top: 4px;
+}
+
+/* Print: hide payment modal and history */
+@media print {
+  .inv-payment-summary { background: white; }
+  .no-print { display: none !important; }
+}
+
+/* ── Patient Components ─────────────────────────── */
+.patient-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #E1F5EE; color: #0F6E56;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; flex-shrink: 0;
+}
+.patient-avatar.female { background: #fce4ec; color: #c2185b; }
+.patient-avatar.sm     { width: 28px; height: 28px; font-size: 12px; }
+.patient-avatar-lg {
+  width: 54px; height: 54px; border-radius: 50%;
+  background: #E1F5EE; color: #0F6E56;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 700; flex-shrink: 0;
+}
+.patient-avatar-lg.female { background: #fce4ec; color: #c2185b; }
+
+/* Patient search dropdown */
+.patient-dropdown {
+  position: absolute; top: 100%; right: 0; left: 0; z-index: 100;
+  background: white; border: 1px solid var(--lab-border);
+  border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  display: none; overflow: hidden; margin-top: 2px;
+}
+.dd-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; cursor: pointer; transition: background 0.1s;
+}
+.dd-item:hover { background: var(--lab-primary-light); }
+.dd-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: #E1F5EE; color: #0F6E56; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+}
+.dd-avatar.female { background: #fce4ec; color: #c2185b; }
+.dd-name { font-size: 14px; font-weight: 500; }
+.dd-sub  { font-size: 11px; color: var(--lab-muted); }
+.dd-empty { padding: 12px 14px; font-size: 13px; color: var(--lab-muted); text-align: center; }
+
+/* Selected patient box */
+.selected-patient-box {
+  background: var(--lab-primary-light);
+  border: 1.5px solid var(--lab-primary);
+  border-radius: 8px; padding: 10px 12px;
+}
+
+/* ── Payment Status Card ────────────────────────── */
+.pay-status-card {
+  border-radius: 12px; padding: 16px 20px;
+  display: flex; align-items: center; gap: 20px;
+  flex-wrap: wrap; border: 1.5px solid transparent;
+}
+.pay-status-paid    { background: #e8f5e9; border-color: #a5d6a7; }
+.pay-status-partial { background: #fff8e1; border-color: #ffe082; }
+.pay-status-unpaid  { background: #fdecea; border-color: #ef9a9a; }
+
+.psc-right { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 180px; }
+.psc-icon  { font-size: 32px; line-height: 1; }
+.pay-status-paid    .psc-icon { color: #2e7d32; }
+.pay-status-partial .psc-icon { color: #f57f17; }
+.pay-status-unpaid  .psc-icon { color: #c62828; }
+
+.psc-label { font-size: 16px; font-weight: 700; }
+.pay-status-paid    .psc-label { color: #1b5e20; }
+.pay-status-partial .psc-label { color: #e65100; }
+.pay-status-unpaid  .psc-label { color: #b71c1c; }
+
+.psc-sub { font-size: 12px; color: var(--lab-muted); margin-top: 2px; }
+
+.psc-amounts {
+  display: flex; align-items: center; gap: 0;
+  background: rgba(255,255,255,0.6);
+  border-radius: 8px; overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.psc-amount-col { padding: 10px 18px; text-align: center; }
+.psc-divider { width: 1px; background: rgba(0,0,0,0.08); align-self: stretch; }
+.psc-amount-label { font-size: 11px; color: var(--lab-muted); margin-bottom: 3px; }
+.psc-amount-val   { font-size: 16px; font-weight: 700; }
+.psc-paid      { color: #1D9E75; }
+.pay-status-unpaid  .psc-paid   { color: var(--lab-muted); }
+.psc-remaining { }
+.pay-status-paid    .psc-remaining { color: #1D9E75; }
+.pay-status-partial .psc-remaining { color: #e53935; }
+.pay-status-unpaid  .psc-remaining { color: #e53935; }
+
+.psc-bar-wrap  { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 4px; }
+.psc-bar { flex: 1; height: 8px; background: rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; }
+.psc-bar-fill {
+  height: 100%; border-radius: 4px;
+  background: #1D9E75; transition: width 0.4s;
+}
+.pay-status-partial .psc-bar-fill { background: #f9a825; }
+.psc-pct { font-size: 13px; font-weight: 700; white-space: nowrap; }
+.pay-status-paid    .psc-pct { color: #1b5e20; }
+.pay-status-partial .psc-pct { color: #e65100; }
+
+/* Payment badges in tables */
+.pay-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+.pay-badge-paid    { background: #e8f5e9; color: #2e7d32; }
+.pay-badge-partial { background: #fff8e1; color: #e65100; }
+.pay-badge-unpaid  { background: #fdecea; color: #c62828; }
+
+@media print {
+  .pay-status-card, .no-print { display: none !important; }
+}

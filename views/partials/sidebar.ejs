@@ -1,0 +1,64 @@
+<div class="sidebar" id="sidebar">
+
+  <!-- Brand -->
+  <div class="sidebar-brand">
+    <div class="brand-icon">
+      <i class="bi bi-activity"></i>
+    </div>
+    <div>
+      <div class="brand-name"><%= LAB_NAME %></div>
+      <span class="badge bg-success-subtle text-success small">Basic v1.0</span>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="sidebar-nav">
+    <div class="nav-label">القائمة الرئيسية</div>
+
+    <a href="/" class="nav-item <%= currentPath === '/' ? 'active' : '' %>">
+      <i class="bi bi-speedometer2"></i>
+      <span>لوحة التحكم</span>
+    </a>
+
+    <a href="/invoices/new" class="nav-item <%= currentPath === '/invoices/new' ? 'active' : '' %>">
+      <i class="bi bi-plus-circle"></i>
+      <span>طلب جديد</span>
+    </a>
+
+    <a href="/invoices" class="nav-item <%= currentPath.startsWith('/invoices') && currentPath !== '/invoices/new' ? 'active' : '' %>">
+      <i class="bi bi-receipt"></i>
+      <span>الفواتير</span>
+    </a>
+
+    <a href="/patients" class="nav-item <%= currentPath.startsWith('/patients') ? 'active' : '' %>">
+      <i class="bi bi-people"></i>
+      <span>سجل المرضى</span>
+    </a>
+
+    <div class="nav-label mt-2">الإعدادات</div>
+
+    <a href="/tests" class="nav-item <%= currentPath.startsWith('/tests') ? 'active' : '' %>">
+      <i class="bi bi-clipboard2-pulse"></i>
+      <span>كتالوج التحاليل</span>
+    </a>
+  </nav>
+
+  <!-- Plan Info -->
+  <div class="sidebar-plan">
+    <div class="plan-header">
+      <i class="bi bi-star-fill text-warning me-1" style="font-size:12px"></i>
+      <span>Basic Plan</span>
+    </div>
+    <div class="plan-sub">حتى 50 مريض / شهر</div>
+    <a href="#" class="btn btn-outline-success btn-sm w-100 mt-2" style="font-size:12px">
+      <i class="bi bi-arrow-up-circle me-1"></i>ترقية للـ Pro
+    </a>
+  </div>
+
+</div>
+
+<!-- Mobile toggle -->
+<button class="sidebar-toggle d-lg-none" id="sidebarToggle">
+  <i class="bi bi-list"></i>
+</button>
+<div class="sidebar-backdrop d-lg-none" id="sidebarBackdrop"></div>

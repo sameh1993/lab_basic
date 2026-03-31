@@ -1,0 +1,170 @@
+<%- include('partials/head') %>
+<%- include('partials/sidebar') %>
+
+<div class="main-content">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h4 class="page-title">لوحة التحكم</h4>
+      <p class="text-muted small mb-0">
+        <i class="bi bi-calendar3 me-1"></i>
+        <%= new Date().toLocaleDateString('ar-EG', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) %>
+      </p>
+    </div>
+    <a href="/invoices/new" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>طلب جديد
+    </a>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-primary-subtle text-primary">
+          <i class="bi bi-people"></i>
+        </div>
+        <div class="stat-value"><%= todayCount %></div>
+        <div class="stat-label">مريض اليوم</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-success-subtle text-success">
+          <i class="bi bi-cash-stack"></i>
+        </div>
+        <div class="stat-value"><%= todayRevenue.toLocaleString('ar-EG') %></div>
+        <div class="stat-label">إيرادات اليوم (ج.م)</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-warning-subtle text-warning">
+          <i class="bi bi-hourglass-split"></i>
+        </div>
+        <div class="stat-value"><%= pendingCount %></div>
+        <div class="stat-label">نتائج معلقة</div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-icon bg-info-subtle text-info">
+          <i class="bi bi-graph-up"></i>
+        </div>
+        <div class="stat-value"><%= monthRevenue.toLocaleString('ar-EG') %></div>
+        <div class="stat-label">إيرادات الشهر (ج.م)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+
+    <!-- Recent Invoices -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h6 class="mb-0"><i class="bi bi-receipt me-2"></i>آخر الفواتير</h6>
+          <a href="/invoices" class="btn btn-sm btn-outline-secondary">عرض الكل</a>
+        </div>
+        <div class="card-body p-0">
+          <% if (recentInvoices.length === 0) { %>
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+              لا توجد فواتير بعد
+            </div>
+          <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>رقم الفاتورة</th>
+                  <th>المريض</th>
+                  <th>التحاليل</th>
+                  <th>الإجمالي</th>
+                  <th>الحالة</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% recentInvoices.forEach(inv => { %>
+                <tr>
+                  <td>
+                    <span class="fw-500 text-primary"><%= inv.invoice_number %></span>
+                    <div class="text-muted small">
+                      <%= new Date(inv.created_at).toLocaleDateString('ar-EG') %>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="fw-500"><%= inv.patient_name %></div>
+                    <% if (inv.patient_phone) { %>
+                      <div class="text-muted small"><%= inv.patient_phone %></div>
+                    <% } %>
+                  </td>
+                  <td>
+                    <div class="text-muted small text-truncate" style="max-width:200px">
+                      <%= inv.tests_list || '—' %>
+                    </div>
+                  </td>
+                  <td class="text-success fw-600">
+                    <%= parseFloat(inv.total_amount).toLocaleString('ar-EG') %> ج
+                  </td>
+                  <td>
+                    <% if (inv.status === 'completed') { %>
+                      <span class="badge bg-success-subtle text-success">مكتمل</span>
+                    <% } else if (inv.status === 'cancelled') { %>
+                      <span class="badge bg-danger-subtle text-danger">ملغي</span>
+                    <% } else { %>
+                      <span class="badge bg-warning-subtle text-warning">معلق</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <a href="/invoices/<%= inv.id %>" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Tests -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>الأكثر طلباً هذا الشهر</h6>
+        </div>
+        <div class="card-body">
+          <% if (topTests.length === 0) { %>
+            <div class="text-center py-4 text-muted small">لا توجد بيانات</div>
+          <% } else { %>
+            <% topTests.forEach((t, i) => { %>
+            <div class="mb-3">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="small fw-500"><%= t.test_name %></span>
+                <span class="small text-muted"><%= t.total %> مرة</span>
+              </div>
+              <div class="progress" style="height:6px">
+                <div
+                  class="progress-bar bg-success"
+                  style="width:<%= Math.round((t.total / topTests[0].total) * 100) %>%"
+                ></div>
+              </div>
+            </div>
+            <% }) %>
+          <% } %>
+        </div>
+        <div class="card-footer text-center">
+          <a href="/tests" class="btn btn-sm btn-outline-success">إدارة الكتالوج</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<%- include('partials/footer') %>
