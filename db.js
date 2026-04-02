@@ -13,21 +13,26 @@ const pool = mysql.createPool({
   charset: "utf8mb4",
 });
 
-// Test connection on startup
-(async () => {
-  try {
-    const conn = await pool.getConnection();
-    console.log("MySQL connected successfully");
-    conn.release();
-  } catch (err) {
-    console.error("MySQL connection failed:", err.message);
-    if (process.env.DB_HOST?.includes(".proxy.rlwy.net") && !process.env.DB_PORT) {
-      console.error(
-        "Missing DB_PORT in .env. Railway MySQL usually requires a custom port."
-      );
+// Avoid blocking Vercel cold starts with an eager connection test.
+if (!process.env.VERCEL) {
+  (async () => {
+    try {
+      const conn = await pool.getConnection();
+      console.log("MySQL connected successfully");
+      conn.release();
+    } catch (err) {
+      console.error("MySQL connection failed:", err.message);
+      if (
+        process.env.DB_HOST?.includes(".proxy.rlwy.net") &&
+        !process.env.DB_PORT
+      ) {
+        console.error(
+          "Missing DB_PORT in .env. Railway MySQL usually requires a custom port."
+        );
+      }
+      process.exit(1);
     }
-    process.exit(1);
-  }
-})();
+  })();
+}
 
 module.exports = pool;
