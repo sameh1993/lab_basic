@@ -3,7 +3,7 @@
 -- شغّل هذا إذا عندك قاعدة بيانات موجودة
 -- ==========================================
 
-USE lab_basic;
+-- USE railway;
 
 -- جدول المرضى
 CREATE TABLE IF NOT EXISTS patients (

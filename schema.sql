@@ -2,9 +2,9 @@
 -- نظام إدارة مركز التحاليل - Basic v1.0
 -- ==========================================
 
-CREATE DATABASE IF NOT EXISTS lab_basic
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE lab_basic;
+-- CREATE DATABASE IF NOT EXISTS railway
+--   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- USE lab_basic;
 
 -- ---- المرضى ----
 CREATE TABLE IF NOT EXISTS patients (
