@@ -1,8 +1,8 @@
-const express = require('express');
-const router  = express.Router();
-const pool    = require('../db');
+const express = require("express");
+const router = express.Router();
+const pool = require("../../db");
 
-router.get('/', async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
     // إحصائيات اليوم
     const [[todayStats]] = await pool.query(`
@@ -54,15 +54,15 @@ router.get('/', async (req, res, next) => {
       LIMIT 5
     `);
 
-    res.render('dashboard', {
-      title:          'الرئيسية',
-      todayCount:     todayStats.count,
-      todayRevenue:   parseFloat(todayStats.revenue),
-      monthCount:     monthStats.count,
-      monthRevenue:   parseFloat(monthStats.revenue),
-      pendingCount:   pendingRow.count,
+    res.render("dashboard", {
+      title: "الرئيسية",
+      todayCount: todayStats.count,
+      todayRevenue: parseFloat(todayStats.revenue),
+      monthCount: monthStats.count,
+      monthRevenue: parseFloat(monthStats.revenue),
+      pendingCount: pendingRow.count,
       recentInvoices,
-      topTests
+      topTests,
     });
   } catch (err) {
     next(err);

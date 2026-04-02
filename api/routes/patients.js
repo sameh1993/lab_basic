@@ -1,11 +1,11 @@
-const express = require('express');
-const router  = express.Router();
-const pool    = require('../db');
+const express = require("express");
+const router = express.Router();
+const pool = require("../../db");
 
 // ── API: بحث سريع للـ autocomplete ───────────────────────
-router.get('/search', async (req, res) => {
+router.get("/search", async (req, res) => {
   try {
-    const q = (req.query.q || '').trim();
+    const q = (req.query.q || "").trim();
     if (!q) return res.json([]);
     const [rows] = await pool.query(
       `SELECT id, full_name, phone, gender,
@@ -22,10 +22,11 @@ router.get('/search', async (req, res) => {
 });
 
 // ── قائمة المرضى ─────────────────────────────────────────
-router.get('/', async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
-    const { search = '', gender = '' } = req.query;
-    const params = [], clauses = [];
+    const { search = "", gender = "" } = req.query;
+    const params = [],
+      clauses = [];
 
     let sql = `
       SELECT p.*,
@@ -38,41 +39,77 @@ router.get('/', async (req, res, next) => {
       LEFT JOIN invoices i ON i.patient_id = p.id
     `;
     if (search) {
-      clauses.push('(p.full_name LIKE ? OR p.phone LIKE ? OR p.national_id LIKE ?)');
+      clauses.push(
+        "(p.full_name LIKE ? OR p.phone LIKE ? OR p.national_id LIKE ?)"
+      );
       params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
-    if (gender) { clauses.push('p.gender = ?'); params.push(gender); }
-    if (clauses.length) sql += ' WHERE ' + clauses.join(' AND ');
-    sql += ' GROUP BY p.id ORDER BY p.full_name ASC';
+    if (gender) {
+      clauses.push("p.gender = ?");
+      params.push(gender);
+    }
+    if (clauses.length) sql += " WHERE " + clauses.join(" AND ");
+    sql += " GROUP BY p.id ORDER BY p.full_name ASC";
 
     const [patients] = await pool.query(sql, params);
-    res.render('patients/index', { title: 'سجل المرضى', patients, search, gender });
-  } catch (err) { next(err); }
+    res.render("patients/index", {
+      title: "سجل المرضى",
+      patients,
+      search,
+      gender,
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ── إضافة مريض جديد ──────────────────────────────────────
-router.post('/', async (req, res, next) => {
+router.post("/", async (req, res, next) => {
   try {
-    const { full_name, phone, phone2, national_id, gender, birth_date, blood_type, address, notes } = req.body;
-    if (!full_name) throw new Error('اسم المريض مطلوب');
+    const {
+      full_name,
+      phone,
+      phone2,
+      national_id,
+      gender,
+      birth_date,
+      blood_type,
+      address,
+      notes,
+    } = req.body;
+    if (!full_name) throw new Error("اسم المريض مطلوب");
     const [result] = await pool.query(
       `INSERT INTO patients (full_name, phone, phone2, national_id, gender, birth_date, blood_type, address, notes)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [full_name.trim(), phone||null, phone2||null, national_id||null,
-       gender||'ذكر', birth_date||null, blood_type||null, address||null, notes||null]
+      [
+        full_name.trim(),
+        phone || null,
+        phone2 || null,
+        national_id || null,
+        gender || "ذكر",
+        birth_date || null,
+        blood_type || null,
+        address || null,
+        notes || null,
+      ]
     );
     res.redirect(`/patients/${result.insertId}`);
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ── ملف المريض ───────────────────────────────────────────
-router.get('/:id', async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   try {
     const [[patient]] = await pool.query(
       `SELECT *, TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) AS age FROM patients WHERE id = ?`,
       [req.params.id]
     );
-    if (!patient) return res.status(404).render('error', { title: '404', message: 'المريض غير موجود' });
+    if (!patient)
+      return res
+        .status(404)
+        .render("error", { title: "404", message: "المريض غير موجود" });
 
     // كل فواتير المريض
     const [invoices] = await pool.query(
@@ -101,39 +138,78 @@ router.get('/:id', async (req, res, next) => {
     );
 
     // ملخص مالي
-    const totalSpent     = invoices.reduce((s, i) => s + parseFloat(i.total_amount),    0);
-    const totalPaid      = invoices.reduce((s, i) => s + parseFloat(i.paid_amount),      0);
-    const totalRemaining = invoices.reduce((s, i) => s + parseFloat(i.remaining_amount), 0);
+    const totalSpent = invoices.reduce(
+      (s, i) => s + parseFloat(i.total_amount),
+      0
+    );
+    const totalPaid = invoices.reduce(
+      (s, i) => s + parseFloat(i.paid_amount),
+      0
+    );
+    const totalRemaining = invoices.reduce(
+      (s, i) => s + parseFloat(i.remaining_amount),
+      0
+    );
 
-    res.render('patients/show', {
+    res.render("patients/show", {
       title: patient.full_name,
-      patient, invoices, testHistory,
-      totalSpent, totalPaid, totalRemaining
+      patient,
+      invoices,
+      testHistory,
+      totalSpent,
+      totalPaid,
+      totalRemaining,
     });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ── تعديل مريض ───────────────────────────────────────────
-router.put('/:id', async (req, res, next) => {
+router.put("/:id", async (req, res, next) => {
   try {
-    const { full_name, phone, phone2, national_id, gender, birth_date, blood_type, address, notes } = req.body;
-    if (!full_name) throw new Error('اسم المريض مطلوب');
+    const {
+      full_name,
+      phone,
+      phone2,
+      national_id,
+      gender,
+      birth_date,
+      blood_type,
+      address,
+      notes,
+    } = req.body;
+    if (!full_name) throw new Error("اسم المريض مطلوب");
     await pool.query(
       `UPDATE patients SET full_name=?, phone=?, phone2=?, national_id=?, gender=?,
               birth_date=?, blood_type=?, address=?, notes=? WHERE id=?`,
-      [full_name.trim(), phone||null, phone2||null, national_id||null,
-       gender||'ذكر', birth_date||null, blood_type||null, address||null, notes||null, req.params.id]
+      [
+        full_name.trim(),
+        phone || null,
+        phone2 || null,
+        national_id || null,
+        gender || "ذكر",
+        birth_date || null,
+        blood_type || null,
+        address || null,
+        notes || null,
+        req.params.id,
+      ]
     );
     res.redirect(`/patients/${req.params.id}`);
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ── حذف مريض ─────────────────────────────────────────────
-router.delete('/:id', async (req, res, next) => {
+router.delete("/:id", async (req, res, next) => {
   try {
-    await pool.query('DELETE FROM patients WHERE id = ?', [req.params.id]);
-    res.redirect('/patients');
-  } catch (err) { next(err); }
+    await pool.query("DELETE FROM patients WHERE id = ?", [req.params.id]);
+    res.redirect("/patients");
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

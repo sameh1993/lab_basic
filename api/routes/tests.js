@@ -1,14 +1,14 @@
 const express = require('express');
-const router  = express.Router();
-const pool    = require('../db');
+const router = express.Router();
+const pool = require('../../db');
 
 // ── قائمة التحاليل ────────────────────────────────────────
 router.get('/', async (req, res, next) => {
   try {
     const { search = '', category = '' } = req.query;
 
-    let sql    = 'SELECT * FROM tests_catalog';
-    const params  = [];
+    let sql = 'SELECT * FROM tests_catalog';
+    const params = [];
     const clauses = [];
 
     if (search) {
@@ -23,13 +23,13 @@ router.get('/', async (req, res, next) => {
     if (clauses.length) sql += ' WHERE ' + clauses.join(' AND ');
     sql += ' ORDER BY category, name';
 
-    const [tests]      = await pool.query(sql, params);
+    const [tests] = await pool.query(sql, params);
     const [categories] = await pool.query(
       'SELECT DISTINCT category FROM tests_catalog ORDER BY category'
     );
 
     res.render('tests/index', {
-      title:      'كتالوج التحاليل',
+      title: 'كتالوج التحاليل',
       tests,
       categories: categories.map(c => c.category),
       search,
