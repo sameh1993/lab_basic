@@ -130,11 +130,17 @@
     <!-- Header -->
     <div class="invoice-header">
       <div class="lab-brand">
-        <div class="lab-logo"><i class="bi bi-activity"></i></div>
+        <div class="lab-logo">
+          <% if (LAB_LOGO) { %>
+            <img src="<%= LAB_LOGO %>" alt="شعار المركز">
+          <% } else { %>
+            <i class="bi bi-activity"></i>
+          <% } %>
+        </div>
         <div>
           <div class="lab-name"><%= LAB_NAME %></div>
           <div class="lab-sub"><%= LAB_ADDRESS %></div>
-          <div class="lab-sub">هاتف: <%= LAB_PHONE %></div>
+          <div class="lab-sub">هاتف: <%= LAB_PHONE %><% if (LAB_PHONE2) { %> / <%= LAB_PHONE2 %><% } %></div>
         </div>
       </div>
       <div class="invoice-meta">

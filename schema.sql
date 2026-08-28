@@ -2,9 +2,9 @@
 -- نظام إدارة مركز التحاليل - Basic v1.0
 -- ==========================================
 
--- CREATE DATABASE IF NOT EXISTS railway
+-- CREATE DATABASE IF NOT EXISTS lab_basic
 --   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
--- USE lab_basic;
+USE lab_basic;
 
 -- ---- المرضى ----
 CREATE TABLE IF NOT EXISTS patients (
@@ -62,6 +62,17 @@ CREATE TABLE IF NOT EXISTS invoice_items (
   price         DECIMAL(10,2) NOT NULL,
   FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
   FOREIGN KEY (test_id)    REFERENCES tests_catalog(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---- إعدادات المركز ----
+CREATE TABLE IF NOT EXISTS settings (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  lab_name    VARCHAR(255) NOT NULL DEFAULT '',
+  lab_address VARCHAR(255) NOT NULL DEFAULT '',
+  lab_phone   VARCHAR(20)  NOT NULL DEFAULT '',
+  lab_phone2  VARCHAR(20)  DEFAULT NULL,
+  lab_logo    LONGTEXT     DEFAULT NULL,
+  updated_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ---- سجل المدفوعات ----

@@ -1,0 +1,170 @@
+<%- include('../partials/head') %>
+<%- include('../partials/sidebar') %>
+
+<div class="main-content">
+
+  <div class="page-header">
+    <div>
+      <h4 class="page-title">إعدادات المركز</h4>
+      <p class="text-muted small mb-0">بيانات المركز التي تظهر أعلى فاتورة المريض</p>
+    </div>
+  </div>
+
+  <% if (saved) { %>
+  <div class="alert alert-success alert-auto-dismiss shadow-sm">
+    <i class="bi bi-check-circle me-2"></i>تم حفظ إعدادات المركز بنجاح
+  </div>
+  <% } %>
+
+  <form method="POST" action="/settings" class="card shadow-sm" id="settingsForm">
+    <div class="card-body">
+      <div class="row g-4">
+
+        <!-- Logo -->
+        <div class="col-md-4">
+          <label class="form-label fw-500">شعار المركز</label>
+          <div class="text-center border rounded p-3 mb-2" style="background:#fff;min-height:170px">
+            <div id="logoPlaceholder" class="text-muted <%= settings.lab_logo ? 'd-none' : '' %>">
+              <i class="bi bi-image" style="font-size:40px"></i>
+              <div class="small mt-1">لا يوجد شعار</div>
+            </div>
+            <img id="logoPreview" src="<%= settings.lab_logo || '' %>" alt="الشعار"
+                 class="img-fluid <%= settings.lab_logo ? '' : 'd-none' %>"
+                 style="max-height:140px;max-width:100%">
+          </div>
+          <input class="form-control form-control-sm" type="file" id="logoFile" accept="image/*">
+          <input type="hidden" name="lab_logo" id="logoData">
+          <% if (settings.lab_logo) { %>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="remove_logo" value="1" id="removeLogo">
+            <label class="form-check-label small text-danger" for="removeLogo">حذف الشعار الحالي</label>
+          </div>
+          <% } %>
+          <div class="form-text">صيغ مدعومة: PNG، JPG، WEBP (حتى 1.5MB)</div>
+        </div>
+
+        <!-- Fields -->
+        <div class="col-md-8">
+          <div class="mb-3">
+            <label class="form-label fw-500">اسم المركز <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="lab_name" id="inpName"
+                   value="<%= settings.lab_name %>" required placeholder="مثال: مركز النور للتحاليل">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-500">العنوان</label>
+            <input type="text" class="form-control" name="lab_address" id="inpAddress"
+                   value="<%= settings.lab_address %>" placeholder="عنوان المركز">
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-500">رقم الهاتف</label>
+              <input type="text" class="form-control" name="lab_phone" id="inpPhone"
+                     value="<%= settings.lab_phone %>" placeholder="01xxxxxxxxx" dir="ltr">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-500">رقم هاتف إضافي</label>
+              <input type="text" class="form-control" name="lab_phone2" id="inpPhone2"
+                     value="<%= settings.lab_phone2 %>" placeholder="اختياري" dir="ltr">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice preview -->
+      <div class="mt-4 p-3 rounded" style="background:#fff;border:1px dashed #dee2e6">
+        <div class="small text-muted mb-2"><i class="bi bi-eye me-1"></i>معاينة رأس الفاتورة</div>
+        <div class="d-flex align-items-start gap-3">
+          <div class="lab-logo" id="pvLogo">
+            <% if (settings.lab_logo) { %>
+              <img src="<%= settings.lab_logo %>" alt="الشعار">
+            <% } else { %>
+              <i class="bi bi-activity"></i>
+            <% } %>
+          </div>
+          <div>
+            <div class="lab-name" id="pvName"><%= settings.lab_name || '' %></div>
+            <div class="lab-sub" id="pvAddress"><%= settings.lab_address || '' %></div>
+            <div class="lab-sub" id="pvPhone">هاتف: <%= settings.lab_phone %><% if (settings.lab_phone2) { %> / <%= settings.lab_phone2 %><% } %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-footer bg-white">
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check-circle me-1"></i>حفظ الإعدادات
+      </button>
+    </div>
+  </form>
+
+</div><!-- /main-content -->
+
+<script>
+  const logoFile = document.getElementById('logoFile');
+  const logoData = document.getElementById('logoData');
+  const logoPreview = document.getElementById('logoPreview');
+  const logoPlaceholder = document.getElementById('logoPlaceholder');
+  const removeLogo = document.getElementById('removeLogo');
+  const pvLogo = document.getElementById('pvLogo');
+
+  function updateLogoBox() {
+    if (logoData.value) {
+      logoPreview.src = logoData.value;
+      logoPreview.classList.remove('d-none');
+      logoPlaceholder.classList.add('d-none');
+      if (pvLogo) pvLogo.innerHTML = '<img src="' + logoData.value + '" alt="الشعار">';
+    }
+  }
+
+  if (logoFile) {
+    logoFile.addEventListener('change', () => {
+      const file = logoFile.files[0];
+      if (!file) return;
+      if (file.size > 1.5 * 1024 * 1024) {
+        alert('حجم الصورة كبير جداً. اختر صورة أقل من 1.5MB');
+        logoFile.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        logoData.value = reader.result;
+        updateLogoBox();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    if (removeLogo) {
+      removeLogo.addEventListener('change', () => {
+        if (removeLogo.checked) {
+          logoData.value = '';
+          logoPreview.classList.add('d-none');
+          logoPreview.src = '';
+          logoPlaceholder.classList.remove('d-none');
+          if (pvLogo) pvLogo.innerHTML = '<i class="bi bi-activity"></i>';
+        } else {
+          updateLogoBox();
+        }
+      });
+    }
+  }
+
+  function bindLive(elId, pvId) {
+    const el = document.getElementById(elId);
+    const pv = document.getElementById(pvId);
+    if (el && pv) el.addEventListener('input', () => { pv.textContent = el.value; });
+  }
+  bindLive('inpName', 'pvName');
+  bindLive('inpAddress', 'pvAddress');
+  const inpPhone = document.getElementById('inpPhone');
+  const inpPhone2 = document.getElementById('inpPhone2');
+  function updatePvPhone() {
+    const p = document.getElementById('pvPhone');
+    let t = 'هاتف: ' + (inpPhone.value || '');
+    if (inpPhone2 && inpPhone2.value) t += ' / ' + inpPhone2.value;
+    p.textContent = t;
+  }
+  inpPhone.addEventListener('input', updatePvPhone);
+  if (inpPhone2) inpPhone2.addEventListener('input', updatePvPhone);
+</script>
+
+<%- include('../partials/footer') %>
