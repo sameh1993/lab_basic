@@ -16,6 +16,18 @@
   </div>
   <% } %>
 
+  <% if (pwSaved) { %>
+  <div class="alert alert-success alert-auto-dismiss shadow-sm">
+    <i class="bi bi-check-circle me-2"></i>تم تغيير كلمة المرور بنجاح
+  </div>
+  <% } %>
+
+  <% if (pwError) { %>
+  <div class="alert alert-danger shadow-sm">
+    <i class="bi bi-exclamation-triangle me-2"></i><%= pwError %>
+  </div>
+  <% } %>
+
   <form method="POST" action="/settings" class="card shadow-sm" id="settingsForm">
     <div class="card-body">
       <div class="row g-4">
@@ -97,6 +109,39 @@
     </div>
   </form>
 
+  <!-- تغيير كلمة المرور -->
+  <div class="card shadow-sm mt-4" id="passwordCard">
+    <div class="card-header bg-white">
+      <h6 class="mb-0"><i class="bi bi-shield-lock me-2 text-primary"></i>تغيير كلمة مرور المستخدم</h6>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label fw-500">كلمة المرور الحالية</label>
+          <input type="password" class="form-control" name="current_password" id="inpCurrentPass"
+                 autocomplete="current-password" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-500">كلمة المرور الجديدة</label>
+          <input type="password" class="form-control" name="new_password" id="inpNewPass"
+                 minlength="5" autocomplete="new-password" required>
+          <div class="form-text">5 أحرف على الأقل</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-500">تأكيد كلمة المرور</label>
+          <input type="password" class="form-control" name="confirm_password" id="inpConfirmPass"
+                 autocomplete="new-password" required>
+        </div>
+      </div>
+      <div class="invalid-feedback" id="pwFeedback" style="display:none"></div>
+    </div>
+    <div class="card-footer bg-white">
+      <button type="button" class="btn btn-primary" id="btnChangePass">
+        <i class="bi bi-key me-1"></i>تغيير كلمة المرور
+      </button>
+    </div>
+  </div>
+
 </div><!-- /main-content -->
 
 <script>
@@ -165,6 +210,60 @@
   }
   inpPhone.addEventListener('input', updatePvPhone);
   if (inpPhone2) inpPhone2.addEventListener('input', updatePvPhone);
+
+  // تغيير كلمة المرور عبر fetch (بدون إعادة تحميل الصفحة)
+  const btnChangePass = document.getElementById('btnChangePass');
+  const pwFeedback = document.getElementById('pwFeedback');
+  if (btnChangePass) {
+    btnChangePass.addEventListener('click', async () => {
+      const currentPassword = document.getElementById('inpCurrentPass').value;
+      const newPassword = document.getElementById('inpNewPass').value;
+      const confirmPassword = document.getElementById('inpConfirmPass').value;
+
+      pwFeedback.style.display = 'none';
+
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        pwFeedback.textContent = 'ادخل جميع الحقول';
+        pwFeedback.style.display = 'block';
+        return;
+      }
+      if (newPassword.length < 5) {
+        pwFeedback.textContent = 'كلمة المرور الجديدة يجب ألا تقل عن 5 أحرف';
+        pwFeedback.style.display = 'block';
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        pwFeedback.textContent = 'كلمتا المرور غير متطابقتين';
+        pwFeedback.style.display = 'block';
+        return;
+      }
+
+      btnChangePass.disabled = true;
+      try {
+        const resp = await fetch('/settings/password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ current_password: currentPassword, new_password: newPassword, confirm_password: confirmPassword }),
+        });
+        if (resp.redirected) {
+          window.location.href = resp.url;
+          return;
+        }
+        const data = await resp.json();
+        pwFeedback.className = 'invalid-feedback';
+        pwFeedback.style.display = 'block';
+        pwFeedback.textContent = data.error || 'حدث خطأ أثناء تغيير كلمة المرور';
+      } catch (err) {
+        pwFeedback.style.display = 'block';
+        pwFeedback.textContent = 'حدث خطأ أثناء تغيير كلمة المرور';
+      } finally {
+        btnChangePass.disabled = false;
+        document.getElementById('inpCurrentPass').value = '';
+        document.getElementById('inpNewPass').value = '';
+        document.getElementById('inpConfirmPass').value = '';
+      }
+    });
+  }
 </script>
 
 <%- include('../partials/footer') %>

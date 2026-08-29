@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS tests_catalog (
   name       VARCHAR(255)  NOT NULL,
   category   VARCHAR(100)  NOT NULL DEFAULT 'عام',
   price      DECIMAL(10,2) NOT NULL,
+  cost       DECIMAL(10,2) NOT NULL DEFAULT 0,
   is_active  TINYINT(1)    NOT NULL DEFAULT 1,
   created_at TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -60,19 +61,30 @@ CREATE TABLE IF NOT EXISTS invoice_items (
   test_name     VARCHAR(255)  NOT NULL,
   test_category VARCHAR(100)  DEFAULT NULL,
   price         DECIMAL(10,2) NOT NULL,
+  cost          DECIMAL(10,2) NOT NULL DEFAULT 0,
   FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
   FOREIGN KEY (test_id)    REFERENCES tests_catalog(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ---- المصروفات ----
+CREATE TABLE IF NOT EXISTS expenses (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  description VARCHAR(255) NOT NULL,
+  amount      DECIMAL(10,2) NOT NULL,
+  category    VARCHAR(100)  DEFAULT 'عام',
+  created_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ---- إعدادات المركز ----
 CREATE TABLE IF NOT EXISTS settings (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  lab_name    VARCHAR(255) NOT NULL DEFAULT '',
-  lab_address VARCHAR(255) NOT NULL DEFAULT '',
-  lab_phone   VARCHAR(20)  NOT NULL DEFAULT '',
-  lab_phone2  VARCHAR(20)  DEFAULT NULL,
-  lab_logo    LONGTEXT     DEFAULT NULL,
-  updated_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  lab_name        VARCHAR(255) NOT NULL DEFAULT '',
+  lab_address     VARCHAR(255) NOT NULL DEFAULT '',
+  lab_phone       VARCHAR(20)  NOT NULL DEFAULT '',
+  lab_phone2      VARCHAR(20)  DEFAULT NULL,
+  lab_logo        LONGTEXT     DEFAULT NULL,
+  admin_pass_hash VARCHAR(255) DEFAULT NULL,
+  updated_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ---- سجل المدفوعات ----

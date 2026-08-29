@@ -46,6 +46,11 @@
       <i class="bi bi-gear"></i>
       <span>بيانات المركز</span>
     </a>
+
+    <a href="/reports" class="nav-item <%= currentPath.startsWith('/reports') ? 'active' : '' %>">
+      <i class="bi bi-graph-up-arrow"></i>
+      <span>الربح والخسارة</span>
+    </a>
   </nav>
 
   <!-- Plan Info -->
@@ -55,9 +60,11 @@
       <span>Basic Plan</span>
     </div>
     <div class="plan-sub">حتى 50 مريض / شهر</div>
-    <a href="#" class="btn btn-outline-success btn-sm w-100 mt-2" style="font-size:12px">
-      <i class="bi bi-arrow-up-circle me-1"></i>ترقية للـ Pro
-    </a>
+    <form action="/logout" method="POST" class="w-100">
+      <button type="submit" class="btn btn-outline-danger btn-sm w-100 mt-2" style="font-size:12px">
+        <i class="bi bi-box-arrow-left me-1"></i>تسجيل الخروج
+      </button>
+    </form>
   </div>
 
 </div>

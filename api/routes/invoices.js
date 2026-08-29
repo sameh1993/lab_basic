@@ -204,8 +204,17 @@ router.post("/", async (req, res, next) => {
 
     if (testRows.length) {
       await conn.query(
-        "INSERT INTO invoice_items (invoice_id, test_id, test_name, test_category, price) VALUES ?",
-        [testRows.map((t) => [invoiceId, t.id, t.name, t.category, t.price])]
+        "INSERT INTO invoice_items (invoice_id, test_id, test_name, test_category, price, cost) VALUES ?",
+        [
+          testRows.map((t) => [
+            invoiceId,
+            t.id,
+            t.name,
+            t.category,
+            t.price,
+            t.cost != null ? parseFloat(t.cost) : 0,
+          ]),
+        ]
       );
     }
     if (safe_paid > 0) {

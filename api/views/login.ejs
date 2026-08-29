@@ -1,0 +1,67 @@
+<%- include('partials/head') %>
+
+<div class="login-wrap">
+  <div class="login-card card shadow-lg border-0">
+    <div class="text-center mb-4">
+      <div class="login-logo mx-auto">
+        <% if (LAB_LOGO) { %>
+          <img src="<%= LAB_LOGO %>" alt="الشعار">
+        <% } else { %>
+          <i class="bi bi-activity"></i>
+        <% } %>
+      </div>
+      <h4 class="fw-700 mt-3 mb-1"><%= LAB_NAME %></h4>
+      <p class="text-muted small mb-0">تسجيل الدخول للوحة التحكم</p>
+    </div>
+
+    <% if (error) { %>
+    <div class="alert alert-danger py-2">
+      <i class="bi bi-x-circle me-1"></i><%= error %>
+    </div>
+    <% } %>
+
+    <form method="POST" action="/login">
+      <div class="mb-3">
+        <label class="form-label fw-500">اسم المستخدم</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
+          <input type="text" name="username" class="form-control" required autofocus
+                 placeholder="admin">
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-500">كلمة المرور</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock"></i></span>
+          <input type="password" name="password" class="form-control" required
+                 placeholder="••••••">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-success w-100 py-2">
+        <i class="bi bi-box-arrow-in-right me-1"></i>دخول
+      </button>
+    </form>
+  </div>
+</div>
+
+<style>
+  .login-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #0F6E56 0%, #1D9E75 100%);
+    padding: 20px;
+  }
+  .login-card { width: 100%; max-width: 380px; padding: 32px; border-radius: 16px; }
+  .login-logo {
+    width: 64px; height: 64px; border-radius: 14px;
+    background: var(--lab-primary); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+  }
+  .login-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 14px; background: #fff; }
+  body { background: #0F6E56; }
+</style>
+
+<%- include('partials/footer') %>

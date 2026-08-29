@@ -43,11 +43,11 @@ router.get('/', async (req, res, next) => {
 // ── إضافة تحليل ──────────────────────────────────────────
 router.post('/', async (req, res, next) => {
   try {
-    const { name, category, price } = req.body;
+    const { name, category, price, cost } = req.body;
     if (!name || !category || !price) throw new Error('جميع الحقول مطلوبة');
     await pool.query(
-      'INSERT INTO tests_catalog (name, category, price) VALUES (?, ?, ?)',
-      [name.trim(), category.trim(), parseFloat(price)]
+      'INSERT INTO tests_catalog (name, category, price, cost) VALUES (?, ?, ?, ?)',
+      [name.trim(), category.trim(), parseFloat(price), parseFloat(cost) || 0]
     );
     res.redirect('/tests');
   } catch (err) {
@@ -56,12 +56,12 @@ router.post('/', async (req, res, next) => {
 });
 
 // ── تعديل تحليل ──────────────────────────────────────────
-router.put('/:id', async (req, res, next) => {
+router.get('/:id', async (req, res, next) => {
   try {
-    const { name, category, price, is_active } = req.body;
+    const { name, category, price, cost, is_active } = req.query;
     await pool.query(
-      'UPDATE tests_catalog SET name = ?, category = ?, price = ?, is_active = ? WHERE id = ?',
-      [name.trim(), category.trim(), parseFloat(price), is_active === '1' ? 1 : 0, req.params.id]
+      'UPDATE tests_catalog SET name = ?, category = ?, price = ?, cost = ?, is_active = ? WHERE id = ?',
+      [name.trim(), category.trim(), parseFloat(price), parseFloat(cost) || 0, is_active === '1' ? 1 : 0, req.params.id]
     );
     res.redirect('/tests');
   } catch (err) {

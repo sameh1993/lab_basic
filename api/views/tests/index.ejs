@@ -51,6 +51,7 @@
             <th>اسم التحليل</th>
             <th>الفئة</th>
             <th>السعر</th>
+            <th>التكلفة</th>
             <th>الحالة</th>
             <th>إجراءات</th>
           </tr>
@@ -65,6 +66,9 @@
             </td>
             <td class="text-success fw-600">
               <%= parseFloat(test.price).toLocaleString('ar-EG') %> ج.م
+            </td>
+            <td class="text-secondary">
+              <%= parseFloat(test.cost || 0).toLocaleString('ar-EG') %> ج.م
             </td>
             <td>
               <% if (test.is_active) { %>
@@ -124,6 +128,10 @@
           <label class="form-label fw-500">السعر (ج.م) <span class="text-danger">*</span></label>
           <input type="number" class="form-control" name="price" required min="0" step="0.5" placeholder="0">
         </div>
+        <div class="mt-3 mb-0">
+          <label class="form-label fw-500">التكلفة (ج.م)</label>
+          <input type="number" class="form-control" name="cost" min="0" step="0.5" value="0" placeholder="تكلفة التحليل على المركز">
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
@@ -138,7 +146,7 @@
 <!-- Edit Test Modal -->
 <div class="modal fade" id="editTestModal" tabindex="-1">
   <div class="modal-dialog">
-    <form id="editTestForm" method="POST" class="modal-content">
+    <form id="editTestForm" class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">تعديل التحليل</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -155,6 +163,10 @@
         <div class="mb-3">
           <label class="form-label fw-500">السعر (ج.م)</label>
           <input type="number" class="form-control" name="price" id="editPrice" required min="0" step="0.5">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-500">التكلفة (ج.م)</label>
+          <input type="number" class="form-control" name="cost" id="editCost" min="0" step="0.5" value="0">
         </div>
         <div class="mb-0">
           <label class="form-label fw-500">الحالة</label>
@@ -177,10 +189,11 @@
 
 <script>
   function editTest(test) {
-    document.getElementById('editTestForm').action = `/tests/${test.id}`;
+    document.getElementById('editTestForm').action = `/tests/${test.id}?_method=PUT`;
     document.getElementById('editName').value     = test.name;
     document.getElementById('editCategory').value = test.category;
     document.getElementById('editPrice').value    = test.price;
+    document.getElementById('editCost').value     = test.cost || 0;
     document.getElementById('editActive').value   = test.is_active ? '1' : '0';
     new bootstrap.Modal(document.getElementById('editTestModal')).show();
   }
